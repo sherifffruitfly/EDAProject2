@@ -11,12 +11,14 @@ loadPollutionData <- function(startYear=NA
 {
   # includes
   library("lubridate")
+  library("stringr")
+  library("devtools")
 
   
   # Data used
   # summarySCC_PM25.rds             - actual pollution data (from class site zip)
   # Source_Classification_Code.rds  - pollution sources lookup/dimension table (from class site zip)
-  # national_county.txt             - fips codes lookup table ()
+  # national_county.txt             - fips codes lookup table () - see bottom of this file for more info
     
   
   # clean environment if the user asked for it
@@ -40,7 +42,6 @@ loadPollutionData <- function(startYear=NA
     if (verbose) {message("FIPS data downloaded & unzipped")}
   }
 
-    
   # initialize return list
   pollutiondata <- list(pol = NA, pol.source = NA, pol.fips = NA)
   
@@ -48,20 +49,27 @@ loadPollutionData <- function(startYear=NA
   # pollution fact table
   if (verbose) {message("loading pollutiondata$pol")}
   pollutiondata$pol <- readRDS("summarySCC_PM25.rds")
-  # PERFORM COLUMN DATE, FACTOR ETC CONVERSIONS
-  #data.fact.filtered <- subset(data, Date >= startdate & Date <= enddate)
+  if (!is.na(startYear) & !is.na(endYear) & startYear <= endYear) {
+    pollutiondata$pol <- subset(pollutiondata$pol, year >= startYear & year <= endYear) 
+  }
+  pollutiondata$pol$type <- as.factor(pollutiondata$pol$type)
+  pollutiondata$pol$SCC <- as.factor(pollutiondata$pol$SCC)
+  #pollutiondata$pol$Pollutant <- as.factor(pollutiondata$pol$Pollutant)
   if (verbose) {message("pollutiondata$pol dataframe populated")}
   
   # pollution source lookup table
   if (verbose) {message("loading pollutiondata$pol.source")}
   pollutiondata$pol.source <- readRDS("Source_Classification_Code.rds")
-  # PERFORM COLUMN DATA, FACTOR ETC CONVERSIONS
   if (verbose) {message("pollution$pol.source dataframe populated")}
   
   # fips county codes lookup table
   if (verbose) {message("loading pollutiondata$pol.fips")}
   pollutiondata$pol.fips <- read.table("national_county.txt", sep=",", quote=NULL, comment="", header=FALSE)
-  # ADD COLUMN NAMES, STRING SURGERY TO MAKE COMPLETE 5 DIGIT FIPS CODE
+  names(pollutiondata$pol.fips) <- c("State", "State_Code", "County_Code", "County", "Class")
+  pollutiondata$pol.fips$FIPS_full <- paste(with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$State_Code), 2, pad = "0"))
+                                            , with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$County_Code), 3, pad = "0"))
+                                            , sep=""
+                                            )
   if (verbose) {message("pollution$pol.fips dataframe populated")}
   
   
