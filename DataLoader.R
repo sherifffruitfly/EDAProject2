@@ -1,12 +1,14 @@
 # This file performs the required ETL for calling scripts' plot needs
 
-loadPollutionData <- function(startYear=NA
-                     , endYear=NA
-                     , clearenv=FALSE
-                     , deleteDataFiles=FALSE
-                     , countyFIPS=NA
-                     , countyName=NA
-                     , verbose=FALSE
+loadPollutionData <- function(verbose=FALSE
+                      , clearenv=FALSE
+                      , deleteDataFiles=FALSE
+                      , joinTables=TRUE
+                      , startYear=NA
+                      , endYear=NA
+                      , countyFIPS=NA
+                      , countyName=NA
+                      , polsource=NA
                      )
 {
   # includes
@@ -54,7 +56,7 @@ loadPollutionData <- function(startYear=NA
   }
   pollutiondata$pol$type <- as.factor(pollutiondata$pol$type)
   pollutiondata$pol$SCC <- as.factor(pollutiondata$pol$SCC)
-  #pollutiondata$pol$Pollutant <- as.factor(pollutiondata$pol$Pollutant)
+  # FILTER THE FACT TABLE ON YEAR, FIPS, SOURCE HERE FOR SMALLER/FASTER JOIN
   if (verbose) {message("pollutiondata$pol dataframe populated")}
   
   # pollution source lookup table
@@ -66,12 +68,19 @@ loadPollutionData <- function(startYear=NA
   if (verbose) {message("loading pollutiondata$pol.fips")}
   pollutiondata$pol.fips <- read.table("national_county.txt", sep=",", quote=NULL, comment="", header=FALSE)
   names(pollutiondata$pol.fips) <- c("State", "State_Code", "County_Code", "County", "Class")
-  pollutiondata$pol.fips$FIPS_full <- paste(with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$State_Code), 2, pad = "0"))
-                                            , with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$County_Code), 3, pad = "0"))
+  pollutiondata$pol.fips$FIPS_full <- paste(withr::with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$State_Code), 2, pad = "0"))
+                                            , withr::with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$County_Code), 3, pad = "0"))
                                             , sep=""
                                             )
   if (verbose) {message("pollution$pol.fips dataframe populated")}
   
+  # perform trinity operation: 3 but really only 1
+  if(joinTables) {
+    if (verbose) {message("joining data, source, fips into 1 table")}
+    merge1 <- merge(pollutiondata$pol, pollutiondata$pol.source, by="SCC", all.x=TRUE) # don't lose any pollution data, source may be null
+    poldata <- merge(merge1, pollutiondata$pol.fips, by.x="fips", by.y="FIPS_full", all.x=TRUE) #don't lose any pollution data, fips may be null
+    if (verbose) {message("complete dataset poldata constructed")}
+  }
   
   # delete data files if the user requested
   if(deleteDataFiles) {
@@ -82,13 +91,11 @@ loadPollutionData <- function(startYear=NA
     if (verbose) {message("data files deleted")}
   }
   
-  # returns list of 3 components:
-  # pd$pol - main fact dataset
-  # pd$pol.source - pollution sources lookup data
-  # pd$pol.fips   - US county FIPS code lookup data
-  # FINAL VERSION I MAY WISH TO PERFORM TABLE JOINS ALONG WITH FILTERING
-  # AND RETURN ONLY 1 TABLE
-  return(pollutiondata)
+  if(joinTables){
+    return(poldata)
+  } else {
+    return(pollutiondata)
+  }
 }
 
 
