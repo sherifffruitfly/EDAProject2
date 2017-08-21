@@ -2,7 +2,6 @@
 
 library("maps")
 library("mapproj")
-data(county.fips)
 
 numbreaks <- 5
 startcolor <- "white"
@@ -25,6 +24,7 @@ colsmatched <- emissionsum$colorbuckets[match(county.fips$fips, emissionsum$fips
 
 #png("Plot1.png")
 plot.new()
+map("world", c("hawaii"), xlim=c(-180,-65), ylim=c(19,72),interior = FALSE)
 map("county"
     , col = colors[colsmatched]
     , fill = TRUE
