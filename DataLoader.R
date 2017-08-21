@@ -64,7 +64,7 @@ loadPollutionData <- function(verbose=FALSE
   pollutiondata$pol$SCC <- as.factor(pollutiondata$pol$SCC)
   #pollutiondata$pol$fips[pollutiondata$pol$fips == "   NA"] <- NA
   pollutiondata$pol$fips[grepl("NA", pollutiondata$pol$fips)] <- NA
-  message("number of NA fips: ", length(pollutiondata$pol$fips[is.na(pollutiondata$pol$fips)]))
+  if (verbose) {message("number of NA fips: ", length(pollutiondata$pol$fips[is.na(pollutiondata$pol$fips)]))}
   # FILTER THE FACT TABLE ON YEAR, FIPS, SOURCE HERE FOR SMALLER/FASTER JOIN
   if (verbose) {message("pollutiondata$pol dataframe populated")}
   
