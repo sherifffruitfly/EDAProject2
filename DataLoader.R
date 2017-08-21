@@ -45,7 +45,13 @@ loadPollutionData <- function(verbose=FALSE
   }
 
   # initialize return list
-  pollutiondata <- list(pol = NA, pol.source = NA, pol.fips = NA)
+  pollutiondata <- list(pol = NA
+                        , pol.source = NA
+                        , pol.fips = NA
+                        , pol.incomplete = NA
+                        , pol.source.incomplete = NA
+                        , pol.fips.incomplete = NA
+                        )
   
   
   # pollution fact table
@@ -56,6 +62,9 @@ loadPollutionData <- function(verbose=FALSE
   }
   pollutiondata$pol$type <- as.factor(pollutiondata$pol$type)
   pollutiondata$pol$SCC <- as.factor(pollutiondata$pol$SCC)
+  #pollutiondata$pol$fips[pollutiondata$pol$fips == "   NA"] <- NA
+  pollutiondata$pol$fips[grepl("NA", pollutiondata$pol$fips)] <- NA
+  message("number of NA fips: ", length(pollutiondata$pol$fips[is.na(pollutiondata$pol$fips)]))
   # FILTER THE FACT TABLE ON YEAR, FIPS, SOURCE HERE FOR SMALLER/FASTER JOIN
   if (verbose) {message("pollutiondata$pol dataframe populated")}
   
@@ -68,21 +77,29 @@ loadPollutionData <- function(verbose=FALSE
   if (verbose) {message("loading pollutiondata$pol.fips")}
   pollutiondata$pol.fips <- read.table("national_county.txt", sep=",", quote=NULL, comment="", header=FALSE)
   names(pollutiondata$pol.fips) <- c("State", "State_Code", "County_Code", "County", "Class")
-  pollutiondata$pol.fips$FIPS_full <- paste(withr::with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$State_Code), 2, pad = "0"))
+  pollutiondata$pol.fips$fips_full <- paste(withr::with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$State_Code), 2, pad = "0"))
                                             , withr::with_options(c(scipen = 999), str_pad(as.character(pollutiondata$pol.fips$County_Code), 3, pad = "0"))
                                             , sep=""
                                             )
+  pollutiondata$pol.fips$fips_N <- as.numeric(pollutiondata$pol.fips$fips_full)
   if (verbose) {message("pollution$pol.fips dataframe populated")}
+  
+  # incomplete data
+  if (verbose){ message("creating incomplete cases tables")}
+  pollutiondata$pol.incomplete <- pollutiondata$pol[!complete.cases(pollutiondata$pol),]
+  pollutiondata$pol.source.incomplete <- pollutiondata$pol.source[!complete.cases(pollutiondata$pol.source),]
+  pollutiondata$pol.fips.incomplete <- pollutiondata$pol.fips[!complete.cases(pollutiondata$pol.fips),]
+  if (verbose){ message("incomplete cases tables created")}
   
   # perform trinity operation: 3 but really only 1
   if(joinTables) {
     if (verbose) {message("joining data, source, fips into 1 table")}
     merge1 <- merge(pollutiondata$pol, pollutiondata$pol.source, by="SCC", all.x=TRUE) # don't lose any pollution data, source may be null
-    poldata <- merge(merge1, pollutiondata$pol.fips, by.x="fips", by.y="FIPS_full", all.x=TRUE) #don't lose any pollution data, fips may be null
+    poldata <- merge(merge1, pollutiondata$pol.fips, by.x="fips", by.y="fips_full", all.x=TRUE) #don't lose any pollution data, fips may be null
     if (verbose) {message("complete dataset poldata constructed")}
   }
   
-  # delete data files if the user requested
+  # delete data files if caller requested
   if(deleteDataFiles) {
     if (verbose) {message("deleting data files")}
     file.remove("summarySCC_PM25.rds")
