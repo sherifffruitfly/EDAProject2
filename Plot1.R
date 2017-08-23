@@ -1,3 +1,5 @@
+# bar plot of emissions across the US by year
+
 source("DataLoader.R")
 
 if(nrow(pd) != 6497651){
@@ -22,4 +24,16 @@ legend("topright"
        , legend=rownames(matrixemissions)
        , title="Type"
        , fill=plotcolors
+       , cex=.7
        )
+xvals <- as.numeric(colnames(matrixemissions)) - min(as.numeric(colnames(matrixemissions)))
+mymodel <- lm(colSums(matrixemissions) ~ xvals)
+abline(mymodel
+       , col="gray40"
+       , lty=5
+       , lwd=2
+)
+text(4.3, 5.2
+     , paste("m = ", round(mymodel$coefficients[2], digits=2))
+     , col="gray40"
+)
