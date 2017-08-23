@@ -1,6 +1,7 @@
 source("DataLoader.R")
-message("loading data")
+
 if(nrow(pd) != 6497651){
+  message("loading data")
   pd <- loadPollutionData(verbose=FALSE, joinTables = TRUE)
 }
 
