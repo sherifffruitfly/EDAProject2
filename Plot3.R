@@ -31,8 +31,8 @@ myplot <- ggplot(emissionsum
                    , stat="identity"
           ) + 
           coord_cartesian(ylim = c(0, 2500), expand = FALSE) +
-          annotate(geom = "text", x = seq_len(nrow(emissionsum)), y = -50, label = emissionsum$Year, size = 3) +
-          annotate(geom = "text", x = 2.5 + 4 * (0:3), y = -150, label = unique(emissionsum$Type), size = 3.5) +
+          annotate(geom = "text", x = seq_len(nrow(emissionsum)), y = -.02 * max(emissionsum$Emissions), label = emissionsum$Year, size = 3) +
+          annotate(geom = "text", x = 2.5 + 4 * (0:3), y = -.06 * max(emissionsum$Emissions), label = unique(emissionsum$Type), size = 3.5) +
           theme(panel.background = element_rect(fill="gray", color = "gray")) +
           theme(plot.margin = unit(c(1, 1, 4, 1), "lines"),
                 axis.title.x = element_blank(),
