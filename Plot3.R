@@ -40,9 +40,19 @@ myplot <- ggplot(emissionsum
                 panel.grid.major.x = element_blank(),
                 panel.grid.minor.x = element_blank()) +
           theme(legend.position = "none") +
-          geom_text(aes(label = ifelse(emissionsum$YoY >= 0, paste("+", percent(emissionsum$YoY), sep=""), percent(emissionsum$YoY)), vjust=-1)
+          geom_text(aes(label = ifelse(is.na(emissionsum$YoY)
+                                       , format(round(emissionsum$Emissions, 1), nsmall=1, big.mark=",")
+                                       , ifelse(emissionsum$YoY >= 0
+                                                , paste("+", percent(emissionsum$YoY), sep="")
+                                                , percent(emissionsum$YoY)
+                                                )
+                                      )
+                        , vjust=-1)
                     , size=2.5
-                    , col = ifelse(emissionsum$YoY > 0, "darkred", "darkgreen")
+                    , col = ifelse(is.na(emissionsum$YoY)
+                                   , "black"
+                                   , ifelse(emissionsum$YoY > 0, "darkred", "darkgreen")
+                                  )
                     ) + 
           labs(y = "Emissions (tons)") +
           theme(plot.title = element_text(hjust = 0.5)) + 
